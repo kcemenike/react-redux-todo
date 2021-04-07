@@ -28,6 +28,7 @@
       const REMOVE_GOAL = 'REMOVE_GOAL'
       const RECEIVE_DATA = 'RECEIVE_DATA'
 
+      // Action creators
       function addTodoAction(todo) {
         return {
           type: ADD_TODO,
@@ -111,6 +112,20 @@
         }
       }
 
+      function handleDeleteTodo(todo) {
+        return (dispatch) => {
+          dispatch(removeTodoAction(todo.id))
+          return API.deleteTodo(todo.id)
+            .catch(() => {
+              dispatch(addTodoAction(todo))
+              alert('An error occurred. Try again')
+            })
+        }
+
+      }
+
+      // MIDDLEWARE
+      // checker middleware
       const checker = (store) => (next) => (action) => {
         if (action.type === ADD_TODO && action.todo.name.toLowerCase().includes('bitcoin')) {
           return alert("Nope. That's a bad idea")
@@ -137,16 +152,24 @@
         return result
       }
 
+      const thunk = (store) => (next) => (action) => {
+        if (typeof action === 'function') {
+          return action(store.dispatch)
+        }
+        return next(action)
+      }
+
       const store = Redux.createStore(
         Redux.combineReducers({
           todos,
           goals,
           loading
-        }), // todos and goals are the reducer functions
+        }),
         Redux.applyMiddleware(
+          thunk,
           checker,
           logger
-        ) // checker and logger are middleware functions
+        )
       )
     </script>
 
@@ -193,12 +216,7 @@
         // }))
       }
       removeItem = (todo) => {
-        this.props.store.dispatch(removeTodoAction(todo.id))
-        return API.deleteTodo(todo.id)
-          .catch(() => {
-            this.props.store.dispatch(addTodoAction(todo))
-            alert('An error occurred. Try again')
-          })
+        this.props.store.dispatch(handleDeleteTodo(todo))
       }
       toggleItem = (id) => {
         this.props.store.dispatch(toggleTodoAction(id))
