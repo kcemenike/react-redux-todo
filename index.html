@@ -168,16 +168,29 @@
     //   }
     // }
 
+    // Logger middleware
+    const logger = (store) => (next) => (action) => {
+      console.group(action.type)
+      console.log('The action: ', action)
+      const result = next(action)
+      console.log('The new state: ', store.getState())
+      console.groupEnd()
+      return result
+    }
+
     const store = Redux.createStore(
       Redux.combineReducers({
         todos,
         goals
       }), // todos and goals are the reducer functions
-      Redux.applyMiddleware(checker) // checker is the middleware function
+      Redux.applyMiddleware(
+        checker,
+        logger
+      ) // checker and logger are middleware functions
     )
 
     store.subscribe(() => {
-      console.log('The new state is: ', store.getState())
+      // console.log('The new state is: ', store.getState())
 
       document.getElementById('todos').innerHTML = ''
       document.getElementById('goals').innerHTML = ''
